@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+       <meta charset = 'UTF-8'>
+       <meta name="viewport" content="width=device-width, initial-scale=1"> 
+       <title>Blog Mark1</title>
+    </head>
+
+    <body>
+        <%- include('D:/Machine learning/topics/backend/blog_app/partials/nav.ejs') %>
+
+        <div class='details_content'>
+            <h2> <%= blog.title %> </h2>
+            <div class='content'>
+                <p><%= blog.body %></p>
+            </div>            
+            <a class = 'delete' data-doc='<%= blog._id%>'>Delete it</a>
+        </div>
+        
+    <script>
+        const trash = document.querySelector('a.delete');
+
+        trash.addEventListener('click', (e) =>{
+            const endpoint = `/blogs/${trash.dataset.doc}`;
+
+            fetch(endpoint, {
+                method: 'DELETE'
+            })
+            .then((response)=> response.json())
+            // .then((data) => console.log(data))
+            .then((data) => window.location.href = data.redirect)
+            .catch(err =>{console.log(err)});
+
+        })
+    </script>
+   
+    </body>
+</html>
