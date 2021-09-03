@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+       <meta charset = 'UTF-8'>
+       <meta name="viewport" content="width=device-width, initial-scale=1"> 
+       <title>Blog Mark1 | <%= title %></title>
+    </head>
+
+    <body>
+        <%- include('D:/Machine learning/topics/backend/blog_app/partials/nav.ejs') %>
+        <!-- <p>username will be displayed</p> -->
+        <div class='details_content'>
+            <p> Welcome <%= users.Username %>
+            <br>
+            created at:<%= users.createdAt %>
+            </p>
+            <% if (users.length >0) { %>
+                <% users.forEach(user =>{ %>
+                <!-- <a class='single_link' href = "/blogs/<%- blog._id %>"> -->
+                <h3 class="Username"><%= user.Username %></h3>
+                <!-- <p class='snippet'><%= blog.snippet %></p> -->
+            <%    })   %>
+            <%} else {%>
+                <p>Thats all folks!!</p>
+        <%    }   %>     
+        </div>
+    
+    </body>
+</html>
