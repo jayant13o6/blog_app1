@@ -239,10 +239,15 @@ app.post('/users',async (req,res) => {
 // Logout feature:
 app.get('/logout', auth, async(req,res) => {
     try {
-        console.log(req.userCheck);
-        req.userCheck.tokens = req.userCheck.tokens.filter((currEle) =>{
-            return currEle.token !== req.token
-        })
+        // // logout from single user
+        // console.log(req.userCheck);
+        // req.userCheck.tokens = req.userCheck.tokens.filter((currEle) =>{
+        //     return currEle.token !== req.token
+        // })
+
+
+        // logout from all :
+        req.userCheck.tokens=[];
 
         res.clearCookie('cookie1') // clears the cookie
         console.log('logout successfully');
