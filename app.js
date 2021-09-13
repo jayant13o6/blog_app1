@@ -1,4 +1,5 @@
 const { render } = require('ejs');
+const MongoClient = require('mongodb').MongoClient;
 const express = require('express');
 const mongoose = require('mongoose');
 const Blog = require('./models/blog.js');
@@ -6,6 +7,10 @@ const Users = require('./models/users.js');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const auth = require('./middleware/auth.js');
+const multer = require('multer');
+const { db } = require('./models/users.js');
+var mongo = require('mongodb');
+
 
 // setup express app
 
@@ -21,6 +26,8 @@ mongoose.connect(dbURI, {
       })
     .then(() => app.listen(3000, ()=>{console.log('we start express and Mongodb connected')}))  //listen for request
     .catch(err => console.log(err));
+var new_db = "mongodb://localhost:27017/blog_db"
+
 
 
 // register view engine
@@ -119,22 +126,31 @@ app.get('/signin',(req,res) =>{
 
 
 // sends the data to database 
-app.post('/blogs', async (req,res)=>{
+app.post('/blogs', auth, async (req,res)=>{
     
-    console.log(req.body);
+    console.log('-->',req.body);
     const blog = new Blog(req.body);
-    const token =  await blog.fillUser();
-    console.log('token is :' + token)
+    const token = req.userCheck.Username;
+    console.log('token/user name:',token)
+    
     
     blog.save()
+
         .then((result) =>{
             // get rerquest from cookies: req.cookies.cookie_name
-            console.log(`this one cookie ${req.cookies.cookie1}`);
-
+            // console.log(`this one cookie ${req.cookies.cookie1}`);
+            
+        const id = result.id
+        console.log(id)
+        Blog.findByIdAndUpdate(id, {Username : token.toString()}, (err,docs)=>{
+            if(err) throw err;
+            console.log("Record updated click click");
+            console.log(docs);
+        })
+    
             res.redirect('/blogs');
         })
-        .catch((err) => {
-            console.log(err)
+        .catch((err) => {  console.log(err)
         })
 })
 
@@ -163,7 +179,8 @@ app.post('/users/signup', async (req,res)=>{
         console.log(name1,result.Username,'<-----')
         link1 = '/blogs/user/' + result.Username
         console.log(link1,typeof(link1))
-        res.render('personal_blog',{users: result, title: 'Personal Blog!!'});
+        // res.render('personal_blog',{users: result, title: 'Personal Blog!!'});
+        res.render('personal_blog',{blogs: result, title: 'Personal Blog!!'});
         // res.redirect('./blogs/user/<%= result.Username %>')    //index:1
         // res.redirect(link1)
         
@@ -175,13 +192,21 @@ app.post('/users/signup', async (req,res)=>{
 
 
 // routes to personal blog  (not working)
-app.get('/blogs/user/:Username', (req,res) => {
-    const UserName = req.params.Username;
-    console.log(UserName);
-    Users.findOne({Username : UserName})
-        .then(Results=> {
-            console.log(Results);
-            res.render('personal_blog',{users: Results, title: 'Personal Blog!!'});
+app.get('/blogs/personal', async (req,res) => {
+
+    const token = req.cookies.cookie1;
+    const verifyUser = jwt.verify(token,'verystrongsecrettokeep');
+    // console.log('info1:',verifyUser);        
+    const userCheck = await Users.findOne({_id:verifyUser._id})
+    
+    name1=Blog.Username
+    name2=userCheck.Username    
+    console.log("---",name1,name2)
+    Blog.find({Username:name2})
+        .then(result=> {
+            console.log(result);
+            res.render('personal_blog',{blogs: result , title: 'Personal Blog!!'});
+            // res.render('personal_blog',{users: result, title: 'Personal Blog!!'});        
         })
         
     .catch((err) => {
@@ -203,7 +228,7 @@ app.get('/blogs/:id', (req,res) => {
     .catch((err) => {
         console.log(err)
     })
-}) 
+})  
 
 
 
@@ -227,8 +252,8 @@ app.post('/users',async (req,res) => {
         httpOnly: true
         });
 
-    
-            res.render('personal_blog',{users: result, title: 'Personal Blog!!'});                
+            
+            res.render('personal_blog',{blogs: result, title: 'Personal Blog!!'});                
     }
         else{
             res.render(('not found'))
@@ -273,6 +298,31 @@ app.delete('/blogs/:id', (req,res) => {
         .catch(err => console.log(err))
     }
 )
+
+// upload image
+
+// storage 
+var filestorage = multer.diskStorage({
+    destination: function(req, flie, cb){
+        cb(null, './uploads')
+    },
+    filename: function(req, file, cb) {
+        cb(null, Date.now()+ file.originalname)
+    }
+})
+var upload = multer({storage : filestorage})
+
+// router function to upload file:
+app.post('/upload', upload.array('images',5), function(req, res, next){
+    var fileInfo = req.file;
+    var title = req.body.title;
+    console.log(title);
+    res.send(fileInfo);
+    // res.render('uploaded');
+    // next();
+})
+
+
 app.use((req,res) => {
     // res.status(404).sendFile('404.html', {root: __dirname});
     res.render('404');
