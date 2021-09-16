@@ -23,22 +23,12 @@ const blogSchema = new Schema({
         type: String,
         default: 'aaa'
     },
+    image:{
+        type:String
+    },
 }, {timestamps: true},);
 
-// blogSchema.Username.push(auth.userCheck.Username)
 
-// const act1 = fillUser();
-
-// // storage 
-// var filestorage = multer.diskStorage({
-//     destination: (req, flie, cb) =>{
-//         cb(null, './uploads')
-//     },
-//     filename: (req, file, cb)=>{
-//         cb(null, Date.now()+ file.originalname)
-//     }
-// })
-// var upload = multer({storage : filestorage})
 
 // // router function to upload file:
 // app.post('/{link given in form}', upload.single('filename given in form'), function(req, res, next){

@@ -10,13 +10,14 @@ const auth = require('./middleware/auth.js');
 const multer = require('multer');
 const { db } = require('./models/users.js');
 var mongo = require('mongodb');
-
+const comments = require('./models/comment.js');
 
 // setup express app
 
 const app = express();
 app.use(express.urlencoded({extended:true})); //middleware
 app.use(cookieParser());
+// app.use(uploading())
 
 // connect to mongodb 
 const dbURI = 'mongodb+srv://12361224:12361224@mark1cluster.tivul.mongodb.net/blog_db?retryWrites=true&w=majority';
@@ -26,9 +27,10 @@ mongoose.connect(dbURI, {
       })
     .then(() => app.listen(3000, ()=>{console.log('we start express and Mongodb connected')}))  //listen for request
     .catch(err => console.log(err));
-var new_db = "mongodb://localhost:27017/blog_db"
+// var new_db = "mongodb://localhost:27017/blog_db"
 
-
+// public file:
+app.use(express.static('./uploads'));
 
 // register view engine
 app.set('view engine', 'ejs');
@@ -76,6 +78,20 @@ app.get('/add-user',(req,res)=>{
         });
 });
 
+ 
+// upload image
+
+// storage 
+var storage = multer.diskStorage({
+    destination: function(req, flie, cb){
+        cb(null, './uploads')
+    },
+    filename: function(req, file, cb) {
+        cb(null, Date.now()+ file.originalname)
+    }
+});
+
+const upload = multer({storage : storage});
 
 // method: get; details of all the blogs
 app.get('/all-blogs', (req,res) =>{
@@ -126,13 +142,22 @@ app.get('/signin',(req,res) =>{
 
 
 // sends the data to database 
-app.post('/blogs', auth, async (req,res)=>{
+app.post('/blogs', auth, upload.single('images'), async (req,res)=>{        // auth is middleware to for using userCheck
+    
+    console.log('***',req.file);
+    var blog = new Blog({
+        title: req.body.title,
+        snippet: req.body.snippet,
+        body: req.body.body,
+        image: req.file.filename,
+    })
     
     console.log('-->',req.body);
-    const blog = new Blog(req.body);
+    // const blog = new Blog(req.body);
     const token = req.userCheck.Username;
     console.log('token/user name:',token)
-    
+    // blog.image = req.file;
+    console.log(req.file)
     
     blog.save()
 
@@ -255,9 +280,7 @@ app.post('/users',async (req,res) => {
             
             res.render('personal_blog',{blogs: result, title: 'Personal Blog!!'});                
     }
-        else{
-            res.render(('not found'))
-        } 
+        else{  res.render(('not found')) } 
 })
 
 
@@ -299,28 +322,16 @@ app.delete('/blogs/:id', (req,res) => {
     }
 )
 
-// upload image
-
-// storage 
-var filestorage = multer.diskStorage({
-    destination: function(req, flie, cb){
-        cb(null, './uploads')
-    },
-    filename: function(req, file, cb) {
-        cb(null, Date.now()+ file.originalname)
-    }
-})
-var upload = multer({storage : filestorage})
 
 // router function to upload file:
-app.post('/upload', upload.array('images',5), function(req, res, next){
-    var fileInfo = req.file;
-    var title = req.body.title;
-    console.log(title);
-    res.send(fileInfo);
-    // res.render('uploaded');
-    // next();
-})
+// app.post('/upload', upload.array('images',5), function(req, res, next){
+//     var fileInfo = req.file;
+//     var title = req.body.title;
+//     console.log(title);
+//     res.send(fileInfo);
+//     res.render('uploaded');
+//     next();
+// })
 
 
 app.use((req,res) => {
